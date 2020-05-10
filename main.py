@@ -1,13 +1,24 @@
 import os
-from riotwatcher import LolWatcher
+import time
+from riotwatcher import LolWatcher, ApiError
 
 region = 'EUN1'
 watcher = LolWatcher(os.getenv('LOL_KEY'))
-badura = watcher.summoner.by_name(region, 'Ahegao Loli')
+badura = watcher.summoner.by_name(region, 'Kedzar')
 badura_accountId = badura['id']
-live_game = watcher.spectator.by_summoner(region, badura_accountId)
-if live_game['gameLength'] > 90 and live_game['mapId'] == 1:
-    print('bets are open: ')
 
-print(live_game)
+timeout = time.time() + 120
 
+while time.time() < timeout:
+    time.sleep(1)
+    try:
+        live_game = watcher.spectator.by_summoner(region, badura_accountId)
+        print('game found')
+        millis = int(round(time.time() * 1000))
+        if live_game['mapId'] == 1 and live_game['gameStartTime'] - millis < 78000:
+            print('bets open')
+    except ApiError as err:
+        if err.response.status_code == 404:
+            print('game not found')
+        else:
+            raise
